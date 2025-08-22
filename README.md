@@ -49,28 +49,68 @@ Implementación de word embeddings utilizando Gensim sobre un corpus personaliza
 **Tema:** Modelos de Lenguaje con Redes Neuronales Recurrentes
 
 **Descripción:**
-Desarrollo de un modelo de lenguaje basado en LSTM para generación de texto usando letras de canciones de The Beatles. El notebook cubre:
+Este desafío explora el desarrollo de modelos de lenguaje utilizando capas LSTM para generar texto basándose en "La Metamorfosis" de Kafka. El notebook demuestra cómo los modelos pueden aprender patrones del lenguaje español:
 
-1. **Preprocesamiento y Tokenización:** Análisis de distribución de longitudes de secuencias, tokenización con Keras y estructuración del dataset many-to-many.
+1. **Preprocesamiento del Corpus:** Se trabaja con el texto completo de "La Metamorfosis", realizando limpieza, normalización de texto y análisis de distribución de longitudes de secuencias para determinar el contexto óptimo del modelo.
 
-2. **Arquitectura del Modelo:** Red neuronal con capas de Embedding, LSTM bidireccional y Dense con activación softmax para predicción de siguiente palabra.
+2. **Integración con FastText:** Se integran embeddings pre-entrenados de FastText en español (300 dimensiones). El modelo descarga automáticamente los embeddings si no están presentes, lo que mejora significativamente la representación semántica de las palabras.
 
-3. **Entrenamiento con Perplejidad:** Implementación de callback personalizado para monitorear la perplejidad como métrica de calidad del modelo de lenguaje.
+3. **Arquitectura del Modelo:** Se diseña una red neuronal secuencial con:
+   - Capa de Embedding usando FastText (congelada, no entrenable)
+   - Dos capas LSTM de 64 unidades cada una con return_sequences=True
+   - Capa de Dropout (0.2) para regularización
+   - Capa Dense final con activación softmax para predicción de siguiente palabra
 
-4. **Estrategias de Generación:** Implementación de diferentes técnicas de generación:
-   - Greedy search (selección determinística)
+4. **Entrenamiento con Perplejidad:** Se implementa un callback personalizado (PplCallback) para monitorear la perplejidad durante el entrenamiento, incluyendo early stopping cuando la métrica no mejora por varias épocas consecutivas.
+
+5. **Estrategias de Generación:** Se desarrollan diferentes técnicas de generación de texto:
+   - Generación greedy (selección determinística)
    - Beam search determinístico
-   - Beam search estocástico con temperatura
+   - Beam search estocástico con control de temperatura
+   - Interface interactiva con Gradio para experimentar en tiempo real
 
-**Resultados destacados:**
-- Modelo con arquitectura LSTM de 100 unidades en dos capas
-- Sistema de generación con beam search configurable
-- Interface interactiva con Gradio para pruebas del modelo
+**Resultados obtenidos:**
+- Modelo LSTM de dos capas (64 unidades cada una) entrenado durante 20 épocas
+- Sistema de beam search configurable que permite controlar la creatividad vs coherencia
+- Interface Gradio funcional para generar texto a partir de cualquier entrada
+- Mejoras notables en la calidad del texto generado gracias a los embeddings FastText
+
+**Observaciones:**
+Aunque el modelo logra generar texto, produce secuencias que no tienen mucho sentido semántico. Esto es típico de los modelos de lenguaje más básicos y demuestra la complejidad real del procesamiento de lenguaje natural.
+
+#### `desafio4_pedro_barrera.ipynb`
+**Tema:** Chatbot QA con Arquitectura Encoder-Decoder y FastText Embeddings
+
+**Descripción:**
+Desarrollo de un chatbot conversacional usando el dataset ConvAI2 (Conversational Intelligence Challenge 2) con una arquitectura encoder-decoder basada en LSTM. Este desafío representa el proyecto más ambicioso de la materia, combinando múltiples técnicas avanzadas de NLP:
+
+1. **Procesamiento del Dataset ConvAI2:** Descarga y preprocesamiento de 6,033 pares pregunta-respuesta extraídos de conversaciones reales en inglés, implementando limpieza de texto y tokenización especializada para diálogos.
+
+2. **Integración de FastText Embeddings:** Implementación de una clase personalizada para cargar y manejar embeddings pre-entrenados FastText (cc.en.300.vec) de 1.6GB, optimizando el almacenamiento con serialización pickle para cargas futuras más rápidas.
+
+3. **Arquitectura Encoder-Decoder Avanzada:** Diseño e implementación de un modelo seq2seq con:
+   - Encoder LSTM (128 unidades) con embeddings FastText congelados
+   - Decoder LSTM con embeddings entrenables
+   - Tokens especiales `<sos>` y `<eos>` para control de secuencias
+   - Arquitecturas separadas para entrenamiento e inferencia
+
+4. **Sistema de Inferencia Conversacional:** Desarrollo de una función de respuesta que simula conversación real, procesando entrada del usuario y generando respuestas palabra por palabra usando los modelos encoder y decoder por separado.
+
+**Resultados obtenidos:**
+- Modelo entrenado por 40 épocas con accuracy de validación del 73% y entrenamiento del 81%
+- Chatbot funcional capaz de responder preguntas básicas en inglés
+- Sistema de embeddings optimizado que mejora significativamente la representación semántica
+
+**Desafíos enfrentados:**
+Como era de esperarse en un proyecto tan complejo, el modelo presenta algunas limitaciones típicas de chatbots seq2seq básicos: tendencia a generar respuestas repetitivas como "i like to go to the beach" o "i am a student". Esto refleja la naturaleza del dataset de entrenamiento y las limitaciones inherentes de los modelos encoder-decoder sin mecanismos de atención, una experiencia valiosa que demuestra tanto las posibilidades como los límites de estas arquitecturas.
 
 ### 📄 Archivos de Datos
 
 #### `la_metamorfosis.txt`
-Texto completo de "La Metamorfosis" de Franz Kafka en español, utilizado como corpus de referencia para algunos ejercicios y experimentos adicionales.
+Texto completo de "La Metamorfosis" de Franz Kafka en español, utilizado como corpus de referencia para el desafío 3.
+
+#### `songs_dataset.zip`
+Archivo comprimido que contiene el datasets con letras de canciones de distintos autores y bandas, uncluyendo el canciones de Bob Dylan (`bob-dylan.txt`) utilizado en el desafío 2 para entrenar el modelo Word2Vec. El corpus incluye una colección de letras de canciones que permite explorar las relaciones semánticas y patrones poéticos característicos del artista.
 
 ## 🚀 Instrucciones de Ejecución
 
@@ -83,6 +123,7 @@ pip install gensim
 pip install gradio
 pip install plotly
 pip install scipy
+pip install gdown  # Para descargas automáticas (Desafío 4)
 ```
 
 ### Ejecución de los Notebooks
@@ -92,14 +133,12 @@ pip install scipy
    jupyter notebook desafio1_pedro_barrera.ipynb
    ```
    - No requiere datasets externos (usa 20newsgroups de sklearn)
-   - Tiempo estimado de ejecución: 15-20 minutos
 
 2. **Para el Desafío 2:**
    ```bash
    jupyter notebook desafio2_pedro_barrera.ipynb
    ```
-   - Requiere el dataset `datasets/songs_dataset/bob-dylan.txt`
-   - Tiempo estimado de ejecución: 10-15 minutos
+   - Requiere el dataset `songs_dataset/bob-dylan.txt`, que se encuentra comprimido en el repo.
 
 3. **Para el Desafío 3:**
    ```bash
@@ -108,6 +147,15 @@ pip install scipy
    - Descarga automáticamente el dataset de canciones si no está presente
    - Tiempo estimado de entrenamiento: 30-45 minutos (dependiendo del hardware)
    - Incluye interface interactiva con Gradio
+
+4. **Para el Desafío 4:**
+   ```bash
+   jupyter notebook desafio4_pedro_barrera.ipynb
+   ```
+   - Descarga automáticamente el dataset ConvAI2 (2.58MB) y los embeddings FastText (1.6GB)
+   - **Tiempo estimado total: 1-2 horas** (incluyendo descarga de embeddings y entrenamiento)
+   - Requiere conexión a internet para descargas automáticas
+   - El modelo entrenado permite interacción conversacional básica
 
 ### Configuración del Entorno
 
@@ -128,41 +176,20 @@ pip install -r requirements.txt  # Si existe
 ## 📈 Conceptos Implementados
 
 ### Técnicas de NLP Cubiertas:
-- ✅ Vectorización TF-IDF
-- ✅ Similitud Coseno
-- ✅ Clasificación con Naïve Bayes (Multinomial y Complement)
-- ✅ Word Embeddings (Word2Vec)
-- ✅ Modelos de Lenguaje con LSTM
-- ✅ Generación de Texto (Greedy, Beam Search)
-- ✅ Métricas de Evaluación (F1-score, Perplejidad)
-
-### Visualizaciones:
-- ✅ Mapas de calor de similitudes
-- ✅ Distribuciones de longitudes de secuencias
-- ✅ Evolución de métricas durante entrenamiento
-- ✅ Proyecciones t-SNE de embeddings
-- ✅ Interfaces interactivas con Gradio
-
-## 📚 Estructura de Aprendizaje
-
-Cada desafío está diseñado para construir sobre los conceptos anteriores:
-
-1. **Desafío 1** → Fundamentos de vectorización y clasificación
-2. **Desafío 2** → Representaciones densas y similitud semántica
-3. **Desafío 3** → Modelos generativos y arquitecturas profundas
-
-## 🔧 Notas Técnicas
-
-- Los notebooks incluyen análisis detallados de resultados y conclusiones
-- Se utilizan técnicas de reproducibilidad (semillas aleatorias)
-- El código está documentado y comentado en español
-- Se incluyen callbacks personalizados para monitoreo de entrenamiento
-- Las visualizaciones son interactivas cuando es posible
+-  Vectorización TF-IDF
+-  Similitud Coseno
+-  Tokenización
+-  Clasificación con Naïve Bayes (Multinomial y Complement)
+-  Word Embeddings (Word2Vec y FastText)
+-  Modelos de Lenguaje con LSTM
+-  Arquitecturas Encoder-Decoder (Seq2Seq)
+-  Generación de Texto (Greedy, Beam Search)
+-  Chatbots Conversacionales
 
 ## 📝 Licencia
 
-Este material es parte del trabajo académico para la CEIA y está destinado únicamente a fines educativos.
+Este material es parte del trabajo académico para la CEIA y está destinado únicamente a fines educativos. Sin embargo el contenido es libre para ser utilizado para cualquier fin que se desee
 
 ---
 
-Para cualquier consulta o problema con la ejecución de los notebooks, revisar los comentarios dentro de cada archivo o contactar al autor. 
+Para cualquier consulta o problema con la ejecución de los notebooks, revisar los comentarios dentro de cada archivo y si aun hay problemas no duden en contactarme :) 
